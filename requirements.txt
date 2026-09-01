@@ -3,3 +3,4 @@ PyMuPDF
 Pillow
 pytesseract
 deep-translator
+gunicorn
