@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LexiPDF AI — PDF Translator</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+
+        <div class="logo">
+            <span>✦</span>
+            LexiPDF
+        </div>
+
+        <div class="nav-badge">
+            AI PDF TRANSLATOR
+        </div>
+
+    </nav>
+
+
+    <!-- HERO -->
+    <main>
+
+        <section class="hero">
+
+            <div class="badge">
+                ✨ POWERED BY AI
+            </div>
+
+            <h1>
+                Translate Your
+                <span>PDFs</span>
+                Instantly
+            </h1>
+
+            <p>
+                Upload any PDF and convert its text into English.
+                Even scanned pages and image-based documents can be
+                processed with OCR.
+            </p>
+
+        </section>
+
+
+        <!-- UPLOAD CARD -->
+        <section class="translator-card">
+
+            <div id="dropZone" class="drop-zone">
+
+                <div class="upload-icon">
+                    ↑
+                </div>
+
+                <h2>
+                    Drop your PDF here
+                </h2>
+
+                <p>
+                    or choose a file from your device
+                </p>
+
+                <input
+                    type="file"
+                    id="pdfInput"
+                    accept=".pdf,application/pdf"
+                    hidden
+                >
+
+                <button
+                    type="button"
+                    class="browse-btn"
+                    onclick="document.getElementById('pdfInput').click()">
+
+                    Choose PDF
+
+                </button>
+
+                <div id="fileInfo" class="file-info">
+                    Maximum file size: 50 MB
+                </div>
+
+            </div>
+
+
+            <!-- LANGUAGE -->
+            <div class="language-section">
+
+                <div class="language-box">
+
+                    <label>
+                        FROM
+                    </label>
+
+                    <select id="sourceLanguage">
+
+                        <option value="auto">
+                            Auto Detect
+                        </option>
+
+                        <option value="en">
+                            English
+                        </option>
+
+                        <option value="ja">
+                            Japanese
+                        </option>
+
+                        <option value="ar">
+                            Arabic
+                        </option>
+
+                        <option value="ur">
+                            Urdu
+                        </option>
+
+                        <option value="hi">
+                            Hindi
+                        </option>
+
+                        <option value="zh-CN">
+                            Chinese
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="language-arrow">
+                    →
+                </div>
+
+
+                <div class="language-box">
+
+                    <label>
+                        TO
+                    </label>
+
+                    <select id="targetLanguage">
+
+                        <option value="en">
+                            English
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <!-- TRANSLATE BUTTON -->
+            <button
+                id="translateBtn"
+                class="translate-btn"
+                disabled>
+
+                <span>✦</span>
+
+                Translate PDF
+
+            </button>
+
+
+            <!-- PROGRESS -->
+            <div
+                id="progressBox"
+                class="progress-box hidden">
+
+                <div class="progress-info">
+
+                    <span id="progressText">
+                        Preparing...
+                    </span>
+
+                    <span id="progressPercent">
+                        0%
+                    </span>
+
+                </div>
+
+                <div class="progress-track">
+
+                    <div
+                        id="progressBar"
+                        class="progress-bar">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- FEATURES -->
+        <section class="features">
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    📄
+                </div>
+
+                <h3>
+                    Smart Text Detection
+                </h3>
+
+                <p>
+                    Automatically extract selectable text
+                    from your PDF.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    🔍
+                </div>
+
+                <h3>
+                    OCR Technology
+                </h3>
+
+                <p>
+                    Detect text from scanned documents
+                    and image-based pages.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    🌐
+                </div>
+
+                <h3>
+                    AI Translation
+                </h3>
+
+                <p>
+                    Translate detected content into
+                    clear English.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- RESULTS -->
+        <section
+            id="resultSection"
+            class="result-section hidden">
+
+            <div class="section-title">
+
+                <span>
+                    TRANSLATION
+                </span>
+
+                <h2>
+                    Your Result
+                </h2>
+
+            </div>
+
+            <div id="results"></div>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer>
+
+        <div class="footer-logo">
+            ✦ LexiPDF
+        </div>
+
+        <p>
+            Intelligent document translation made simple.
+        </p>
+
+        <small>
+            © 2026 LexiPDF AI
+        </small>
+
+    </footer>
+
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+
+  </html>
