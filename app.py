@@ -24,7 +24,7 @@ app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 
 # ==========================================
-# HINDI TO ROMAN HINDI
+# HINDI TO NATURAL ROMAN HINDI
 # ==========================================
 
 def hindi_to_roman(text):
@@ -34,17 +34,22 @@ def hindi_to_roman(text):
 
     try:
 
+        # Devanagari -> ITRANS
         roman = sanscript.transliterate(
             text,
             sanscript.DEVANAGARI,
             sanscript.ITRANS
         )
 
-        # ITRANS -> simple readable Roman Hindi
+        # ------------------------------------------
+        # ITRANS cleanup
+        # ------------------------------------------
+
         replacements = [
             ("RR^i", "ri"),
             ("R^i", "ri"),
             ("RRi", "ri"),
+            ("R^I", "ri"),
             ("Ri", "ri"),
 
             ("ai", "ai"),
@@ -60,25 +65,25 @@ def hindi_to_roman(text):
             ("dh", "dh"),
             ("ph", "ph"),
             ("bh", "bh"),
+
+            ("Sh", "sh"),
             ("sh", "sh"),
+
+            ("GY", "gy"),
+            ("JN", "gy"),
 
             ("~N", "n"),
             ("~n", "n"),
             (".N", "n"),
             (".n", "n"),
-            ("M", "n"),
 
             ("~m", "m"),
-
-            ("GY", "gy"),
-            ("JN", "gy"),
-
-            ("Sh", "sh"),
-            ("S", "sh"),
 
             ("T", "t"),
             ("D", "d"),
             ("N", "n"),
+
+            ("M", "n"),
 
             ("^", ""),
             ("'", ""),
@@ -87,24 +92,281 @@ def hindi_to_roman(text):
         for old, new in replacements:
             roman = roman.replace(old, new)
 
-        # Remove common ITRANS punctuation
+        # ------------------------------------------
+        # Punctuation
+        # ------------------------------------------
+
         roman = roman.replace("||", ".")
         roman = roman.replace("|", ".")
         roman = roman.replace("~", "")
 
-        # Spaces clean
+        # ------------------------------------------
+        # Remove extra spaces
+        # ------------------------------------------
+
         roman = re.sub(
             r"\s+",
             " ",
             roman
-        )
+        ).strip()
 
-        # Natural Roman Hindi corrections
+        # ------------------------------------------
+        # Natural Roman Hindi word corrections
+        # ------------------------------------------
+
         corrections = {
-            "mai": "main",
-            "Main": "Main",
-            "mein": "mein",
 
+            # Common words
+            "eka": "ek",
+            "EkA": "Ek",
+
+            "vyasta": "vyast",
+            "Vyasta": "Vyast",
+
+            "dina": "din",
+            "Dina": "Din",
+
+            "hara": "har",
+            "Hara": "Har",
+
+            "subaha": "subah",
+            "Subaha": "Subah",
+
+            "jaldI": "jaldi",
+            "jaldi": "jaldi",
+
+            "uthatA": "uthta",
+            "uthata": "uthta",
+            "UthatA": "Uthta",
+
+            "vaha": "woh",
+            "Vaha": "Woh",
+
+            "vah": "woh",
+            "Vah": "Woh",
+
+            "usakA": "uska",
+            "usak": "uska",
+
+            "apane": "apne",
+            "Apane": "Apne",
+
+            "apani": "apni",
+            "apanI": "apni",
+            "Apani": "Apni",
+
+            "lie": "liye",
+            "liye": "liye",
+
+            "tAIyAra": "taiyar",
+            "taiyAra": "taiyar",
+            "taiyara": "taiyar",
+            "TaiyAra": "Taiyar",
+
+            "nAshtA": "nashta",
+            "nashta": "nashta",
+            "Nashta": "Nashta",
+
+            "karatA": "karta",
+            "karata": "karta",
+            "KaratA": "Karta",
+
+            "aura": "aur",
+            "Aura": "Aur",
+
+            "chalA": "chala",
+            "chala": "chala",
+
+            "ghara": "ghar",
+            "Ghara": "Ghar",
+
+            "kAryAlaya": "office",
+            "karyalaya": "office",
+            "Karyalaya": "office",
+
+            "kArya": "kaam",
+            "karya": "kaam",
+
+            "vyasta": "vyast",
+
+            "kAryadivasa": "workday",
+            "karyadivasa": "workday",
+
+            "rahatA": "rehta",
+            "rahata": "rehta",
+
+            "vaha": "woh",
+
+            "apane": "apne",
+
+            "kAryon": "kaamon",
+            "karyon": "kaamon",
+
+            "pUrA": "poora",
+            "pUra": "poora",
+            "pura": "poora",
+
+            "karane": "karne",
+
+            "men": "mein",
+            "meM": "mein",
+
+            "kaI": "kai",
+            "kai": "kai",
+
+            "ghaMTe": "ghante",
+            "ghante": "ghante",
+
+            "bitAtA": "bitata",
+            "bitata": "bitata",
+
+            "baithakon": "meetings",
+
+            "bhAga": "bhaag",
+            "bhaga": "bhaag",
+
+            "lenA": "lena",
+            "lena": "lena",
+
+            "sahayogiyon": "colleagues",
+
+            "madada": "madad",
+            "Madada": "Madad",
+
+            "karanA": "karna",
+            "karana": "karna",
+
+            "dina": "din",
+
+            "bhara": "bhar",
+            "Bhara": "Bhar",
+
+            "kAma": "kaam",
+            "kama": "kaam",
+
+            "shAma": "shaam",
+            "shama": "shaam",
+
+            "taka": "tak",
+
+            "thakAna": "thakan",
+
+            "mahasUsa": "mehsoos",
+            "mahasusa": "mehsoos",
+
+            "jimmedAriyAn": "zimmedariyan",
+            "jimmedariyan": "zimmedariyan",
+
+            "pUrI": "poori",
+            "puri": "poori",
+
+            "vApasa": "wapas",
+            "vapasa": "wapas",
+
+            "yAtrA": "yatra",
+            "yatra": "yatra",
+
+            "jaba": "jab",
+            "Jaba": "Jab",
+
+            "AtA": "aata",
+            "ata": "aata",
+
+            "apanI": "apni",
+
+            "patnI": "patni",
+            "patni": "patni",
+
+            "sAtha": "saath",
+            "satha": "saath",
+
+            "kuCha": "kuchh",
+            "kucha": "kuchh",
+
+            "shAnta": "shaant",
+            "shanta": "shaant",
+
+            "samaya": "samay",
+
+            "bItAtA": "bitaata",
+            "bitata": "bitaata",
+
+            "unake": "unke",
+            "Unake": "Unke",
+
+            "bAre": "baare",
+            "bare": "baare",
+
+            "bAta": "baat",
+            "bata": "baat",
+
+            "ArAma": "aaraam",
+            "arama": "aaraam",
+
+            "rAta": "raat",
+            "Rata": "Raat",
+
+            "khAne": "khaane",
+            "khane": "khaane",
+
+            "shAntipUrNa": "shaantipoorn",
+            "shantipurna": "shaantipoorn",
+
+            "taiyArI": "taiyari",
+            "taiyari": "taiyari",
+
+            "ahasAsa": "ehsaas",
+            "ahasaasa": "ehsaas",
+
+            "thakA": "thaka",
+            "thaka": "thaka",
+
+            "huA": "hua",
+            "hua": "hua",
+
+            "lekina": "lekin",
+            "Lekin": "Lekin",
+
+            "santuShta": "santusht",
+            "santushta": "santusht",
+
+            "bistara": "bistar",
+            "Bistara": "Bistar",
+
+            "jAtA": "jaata",
+            "jata": "jaata",
+
+            "so": "so",
+
+            "jAtA": "jaata",
+
+            "shurU": "shuru",
+            "shuru": "shuru",
+
+            "karane": "karne",
+
+            "agale": "agle",
+            "Agale": "Agle",
+
+            "taiyAra": "taiyar",
+
+            "hone": "hone",
+
+            # Pronouns
+            "mujhe": "mujhe",
+            "Mujhe": "Mujhe",
+
+            "tumhe": "tumhein",
+            "Tumhe": "Tumhein",
+
+            "tumhE": "tumhein",
+
+            "ham": "hum",
+            "Ham": "Hum",
+
+            "hama": "hamara",
+
+            # Common grammar
             "haii": "hai",
             "haia": "hai",
 
@@ -114,12 +376,37 @@ def hindi_to_roman(text):
             "kyon": "kyun",
             "Kyon": "Kyun",
 
-            "tumhe": "tumhein",
-            "Tumhe": "Tumhein",
+            "mai": "main",
+            "Mai": "Main",
 
-            "mujhe": "mujhe",
-            "Mujhe": "Mujhe",
+            "mE": "main",
+
+            "mErA": "mera",
+            "mera": "mera",
+
+            "mErI": "meri",
+            "meri": "meri",
+
+            "usakA": "uska",
+            "usakI": "uski",
+
+            "kevala": "sirf",
+            "sirf": "sirf",
+
+            "isalie": "isliye",
+            "isliye": "isliye",
+
+            "bAda": "baad",
+            "bada": "baad",
+
+            "sA": "sa",
+
+            "santushta": "santusht",
         }
+
+        # ------------------------------------------
+        # Word-by-word correction
+        # ------------------------------------------
 
         words = roman.split()
 
@@ -129,19 +416,44 @@ def hindi_to_roman(text):
 
             punctuation = ""
 
+            # Keep punctuation
             while word and word[-1] in ".,!?;:":
 
-                punctuation = word[-1] + punctuation
+                punctuation = (
+                    word[-1]
+                    + punctuation
+                )
+
                 word = word[:-1]
 
+            # Remove unwanted symbols
+            word = word.replace(
+                "^",
+                ""
+            )
+
+            word = word.replace(
+                "'",
+                ""
+            )
+
+            # Exact correction
             if word in corrections:
+
                 word = corrections[word]
 
+            # Case-insensitive correction
             elif word.lower() in corrections:
-                replacement = corrections[word.lower()]
+
+                replacement = corrections[
+                    word.lower()
+                ]
 
                 if word and word[0].isupper():
-                    replacement = replacement.capitalize()
+
+                    replacement = (
+                        replacement.capitalize()
+                    )
 
                 word = replacement
 
@@ -149,9 +461,108 @@ def hindi_to_roman(text):
                 word + punctuation
             )
 
-        roman = " ".join(cleaned)
+        roman = " ".join(
+            cleaned
+        )
 
-        return roman.strip()
+        # ------------------------------------------
+        # Phrase corrections
+        # ------------------------------------------
+
+        phrase_corrections = [
+
+            ("ke lie", "ke liye"),
+            ("ke liye ghar", "ghar se"),
+
+            ("ghara ke", "ghar ke"),
+
+            ("dina ke lie", "din ke liye"),
+
+            ("taiyara hota", "taiyar hota"),
+
+            ("nashta karata", "nashta karta"),
+
+            ("office ke lie", "office ke liye"),
+
+            ("kaI ghaMTe", "kai ghante"),
+
+            ("kai ghante", "kai ghante"),
+
+            ("bitata hai", "bitaata hai"),
+
+            ("pUrA karane", "poora karne"),
+
+            ("poora karane", "poora karne"),
+
+            ("sAtha", "saath"),
+
+            ("shAnta", "shaant"),
+
+            ("shAntipUrNa", "shaantipoorn"),
+
+            ("rAta ke", "raat ke"),
+
+            ("ghara vApasa", "ghar wapas"),
+
+            ("ghar vapasa", "ghar wapas"),
+
+            ("agale dina", "agle din"),
+
+            ("agale din", "agle din"),
+
+            ("eka aura", "ek aur"),
+
+            ("eka", "ek"),
+
+            ("vyasta dina", "vyast din"),
+
+            ("hara subaha", "har subah"),
+
+            ("jaldI uthatA", "jaldi uthta"),
+
+            ("jaldI", "jaldi"),
+
+            ("vaha", "woh"),
+
+            ("Vaha", "Woh"),
+
+            ("apane", "apne"),
+
+            ("apanI", "apni"),
+
+            ("karatA", "karta"),
+
+            ("aura", "aur"),
+
+            ("ghara", "ghar"),
+
+            ("kAma", "kaam"),
+
+            ("shAma", "shaam"),
+
+            ("mahasUsa", "mehsoos"),
+
+            ("jimmedAriyAn", "zimmedariyan"),
+        ]
+
+        for old, new in phrase_corrections:
+
+            roman = roman.replace(
+                old,
+                new
+            )
+
+        # ------------------------------------------
+        # Final cleanup
+        # ------------------------------------------
+
+        roman = re.sub(
+            r"\s+",
+            " ",
+            roman
+        ).strip()
+
+        return roman
 
     except Exception as error:
 
@@ -298,7 +709,6 @@ def translate_chunk(text, target):
     if not text or not text.strip():
         return ""
 
-    # Google
     result = google_translate_chunk(
         text,
         target
@@ -311,7 +721,6 @@ def translate_chunk(text, target):
         "Google failed. Using MyMemory..."
     )
 
-    # MyMemory
     result = mymemory_translate_chunk(
         text,
         target
@@ -324,7 +733,6 @@ def translate_chunk(text, target):
         "All translation services failed."
     )
 
-    # Never put an error message into PDF
     return text
 
 
@@ -337,7 +745,6 @@ def translate_text(text, target_language):
     if not text or not text.strip():
         return ""
 
-    # Target language
     if target_language == "roman_hindi":
 
         target = "hi"
@@ -372,7 +779,7 @@ def translate_text(text, target_language):
         translated_parts
     )
 
-    # Hindi -> Roman Hindi
+    # Hindi -> Natural Roman Hindi
     if target_language == "roman_hindi":
 
         result = hindi_to_roman(
@@ -640,153 +1047,4 @@ def translate_pdf():
         "roman_hindi"
     ]
 
-    if target_language not in allowed_languages:
-
-        target_language = "english"
-
-    filepath = os.path.join(
-        UPLOAD_FOLDER,
-        file.filename
-    )
-
-    file.save(
-        filepath
-    )
-
-    try:
-
-        results = process_pdf(
-            filepath,
-            target_language
-        )
-
-        base_name = os.path.splitext(
-            file.filename
-        )[0]
-
-        if target_language == "english":
-
-            suffix = "_English.pdf"
-
-        elif target_language == "hindi":
-
-            suffix = "_Hindi.pdf"
-
-        else:
-
-            suffix = "_RomanHindi.pdf"
-
-        output_filename = (
-            base_name
-            + suffix
-        )
-
-        output_path = os.path.join(
-            OUTPUT_FOLDER,
-            output_filename
-        )
-
-        create_translated_pdf(
-            results,
-            output_path,
-            target_language
-        )
-
-        return jsonify({
-
-            "success":
-                True,
-
-            "filename":
-                file.filename,
-
-            "download":
-                "/download/"
-                + output_filename,
-
-            "pages":
-                results
-
-        })
-
-    except Exception as error:
-
-        print(
-            "PDF processing error:",
-            error
-        )
-
-        return jsonify({
-
-            "success":
-                False,
-
-            "error":
-                "Unable to process this PDF."
-
-        }), 500
-
-    finally:
-
-        if os.path.exists(
-            filepath
-        ):
-
-            os.remove(
-                filepath
-            )
-
-
-# ==========================================
-# DOWNLOAD
-# ==========================================
-
-@app.route(
-    "/download/<filename>"
-)
-def download_pdf(filename):
-
-    filepath = os.path.join(
-        OUTPUT_FOLDER,
-        filename
-    )
-
-    if not os.path.exists(
-        filepath
-    ):
-
-        return "File not found", 404
-
-    return send_file(
-
-        filepath,
-
-        as_attachment=True,
-
-        download_name=filename
-
-    )
-
-
-# ==========================================
-# START SERVER
-# ==========================================
-
-if __name__ == "__main__":
-
-    port = int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
-    )
-
-    app.run(
-
-        host="0.0.0.0",
-
-        port=port,
-
-        debug=False
-
-        )
+    if target_language not in a
