@@ -1,6 +1,7 @@
 const pdfInput = document.getElementById("pdfInput");
 const dropZone = document.getElementById("dropZone");
 const translateBtn = document.getElementById("translateBtn");
+const targetLanguage = document.getElementById("targetLanguage");
 
 const fileInfo = document.getElementById("fileInfo");
 
