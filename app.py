@@ -1047,4 +1047,4 @@ def translate_pdf():
         "roman_hindi"
     ]
 
-    if target_language not in a
+if target_language not in allowed_languages:
