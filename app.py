@@ -3,10 +3,12 @@ import fitz
 import os
 import io
 import re
+import time
 
 from PIL import Image
 import pytesseract
-from deep_translator import GoogleTranslator
+
+from deep_translator import GoogleTranslator, MyMemoryTranslator
 
 
 app = Flask(__name__)
@@ -29,7 +31,6 @@ def hindi_to_roman(text):
     if not text:
         return ""
 
-    # Common Hindi conjuncts
     replacements = {
         "क्ष": "ksh",
         "त्र": "tr",
@@ -57,41 +58,34 @@ def hindi_to_roman(text):
         "ग": "g",
         "घ": "gh",
         "ङ": "ng",
-
         "च": "ch",
         "छ": "chh",
         "ज": "j",
         "झ": "jh",
         "ञ": "ny",
-
         "ट": "t",
         "ठ": "th",
         "ड": "d",
         "ढ": "dh",
         "ण": "n",
-
         "त": "t",
         "थ": "th",
         "द": "d",
         "ध": "dh",
         "न": "n",
-
         "प": "p",
         "फ": "ph",
         "ब": "b",
         "भ": "bh",
         "म": "m",
-
         "य": "y",
         "र": "r",
         "ल": "l",
         "व": "v",
-
         "श": "sh",
         "ष": "sh",
         "स": "s",
         "ह": "h",
-
         "ड़": "d",
         "ढ़": "dh",
     }
@@ -153,18 +147,15 @@ def hindi_to_roman(text):
 
         char = text[i]
 
-        # Consonant
         if char in consonants:
 
             base = consonants[char]
 
-            # Halant means no vowel
             if i + 1 < len(text) and text[i + 1] == "्":
                 result.append(base)
                 i += 2
                 continue
 
-            # Matra
             if i + 1 < len(text) and text[i + 1] in matras:
                 result.append(
                     base + matras[text[i + 1]]
@@ -172,40 +163,33 @@ def hindi_to_roman(text):
                 i += 2
                 continue
 
-            # Default inherent vowel
             result.append(base + "a")
             i += 1
             continue
 
-        # Independent vowel
         if char in vowels:
             result.append(vowels[char])
             i += 1
             continue
 
-        # Special characters
         if char in special:
             result.append(special[char])
             i += 1
             continue
 
-        # Digits
         if char in digits:
             result.append(digits[char])
             i += 1
             continue
 
-        # Everything else
         result.append(char)
         i += 1
 
     roman = "".join(result)
 
-    # Basic cleanup
     roman = re.sub(r"\baaa\b", "aa", roman)
     roman = re.sub(r"\s+", " ", roman)
 
-    # Common natural Roman Hindi corrections
     corrections = {
         "mai": "main",
         "hain": "hain",
@@ -232,6 +216,159 @@ def hindi_to_roman(text):
 
 
 # ==========================================
+# CHECK BAD TRANSLATION RESPONSE
+# ==========================================
+
+def is_bad_translation(text):
+
+    if not text:
+        return True
+
+    bad_phrases = [
+        "error 500",
+        "server error",
+        "internal server error",
+        "please try again later",
+        "something went wrong",
+        "an error occurred",
+        "error occurred",
+    ]
+
+    lower_text = text.lower()
+
+    for phrase in bad_phrases:
+        if phrase in lower_text:
+            return True
+
+    return False
+
+
+# ==========================================
+# SPLIT TEXT INTO SMALL CHUNKS
+# ==========================================
+
+def split_text(text, max_length=3000):
+
+    chunks = []
+    current = ""
+
+    for line in text.splitlines(True):
+
+        if len(current) + len(line) > max_length:
+
+            if current.strip():
+                chunks.append(current)
+
+            current = line
+
+        else:
+
+            current += line
+
+    if current.strip():
+        chunks.append(current)
+
+    return chunks
+
+
+# ==========================================
+# GOOGLE TRANSLATION
+# ==========================================
+
+def google_translate_chunk(text, target):
+
+    for attempt in range(3):
+
+        try:
+
+            translator = GoogleTranslator(
+                source="auto",
+                target=target
+            )
+
+            result = translator.translate(text)
+
+            if result and not is_bad_translation(result):
+                return result
+
+        except Exception as error:
+
+            print(
+                f"Google translation attempt "
+                f"{attempt + 1} failed:",
+                error
+            )
+
+        time.sleep(1)
+
+    return None
+
+
+# ==========================================
+# MYMEMORY FALLBACK
+# ==========================================
+
+def mymemory_translate_chunk(text, target):
+
+    try:
+
+        translator = MyMemoryTranslator(
+            source="auto",
+            target=target
+        )
+
+        result = translator.translate(text)
+
+        if result and not is_bad_translation(result):
+            return result
+
+    except Exception as error:
+
+        print(
+            "MyMemory translation failed:",
+            error
+        )
+
+    return None
+
+
+# ==========================================
+# TRANSLATE ONE CHUNK
+# ==========================================
+
+def translate_chunk(text, target):
+
+    if not text or not text.strip():
+        return ""
+
+    # First try Google
+    result = google_translate_chunk(
+        text,
+        target
+    )
+
+    if result:
+        return result
+
+    # If Google fails, use MyMemory
+    print("Using MyMemory fallback...")
+
+    result = mymemory_translate_chunk(
+        text,
+        target
+    )
+
+    if result:
+        return result
+
+    # Do NOT put an API error inside the PDF.
+    # Return original text instead.
+    print("All translation services failed.")
+
+    return text
+
+
+# ==========================================
 # TRANSLATE TEXT
 # ==========================================
 
@@ -240,94 +377,45 @@ def translate_text(text, target_language):
     if not text or not text.strip():
         return ""
 
-    # Roman Hindi:
-    # First translate into Hindi,
-    # then convert Hindi script into Roman Hindi.
     if target_language == "roman_hindi":
+        intermediate_language = "hi"
 
+    elif target_language == "hindi":
         intermediate_language = "hi"
 
     else:
+        intermediate_language = "en"
 
-        intermediate_language = target_language
+    chunks = split_text(
+        text,
+        max_length=3000
+    )
 
-    try:
+    translated_parts = []
 
-        translator = GoogleTranslator(
-            source="auto",
-            target=intermediate_language
+    for chunk in chunks:
+
+        translated = translate_chunk(
+            chunk,
+            intermediate_language
         )
 
-        chunks = []
-        current = ""
-
-        for line in text.splitlines(True):
-
-            if len(current) + len(line) > 3500:
-
-                if current.strip():
-                    chunks.append(current)
-
-                current = line
-
-            else:
-
-                current += line
-
-        if current.strip():
-            chunks.append(current)
-
-        translated_parts = []
-
-        for chunk in chunks:
-
-            try:
-
-                translated = translator.translate(
-                    chunk
-                )
-
-                if translated:
-                    translated_parts.append(
-                        translated
-                    )
-                else:
-                    translated_parts.append(
-                        chunk
-                    )
-
-            except Exception as error:
-
-                print(
-                    "Translation chunk error:",
-                    error
-                )
-
-                translated_parts.append(
-                    chunk
-                )
-
-        result = "\n".join(
-            translated_parts
+        translated_parts.append(
+            translated
         )
 
-        # Convert Hindi → Roman Hindi
-        if target_language == "roman_hindi":
+    result = "\n".join(
+        translated_parts
+    )
 
-            result = hindi_to_roman(
-                result
-            )
+    # Roman Hindi conversion
+    if target_language == "roman_hindi":
 
-        return result
-
-    except Exception as error:
-
-        print(
-            "Translation error:",
-            error
+        result = hindi_to_roman(
+            result
         )
 
-        return text
+    return result
 
 
 # ==========================================
@@ -368,12 +456,15 @@ def create_translated_pdf(
     pdf = fitz.open()
 
     if target_language == "english":
+
         title = "English Translation"
 
     elif target_language == "hindi":
+
         title = "Hindi Translation"
 
     else:
+
         title = "Roman Hindi Translation"
 
     for result in results:
@@ -427,7 +518,6 @@ def process_pdf(
 
         text = page.get_text("text")
 
-        # Normal selectable text
         if text and text.strip():
 
             translated = translate_text(
@@ -447,7 +537,6 @@ def process_pdf(
 
             })
 
-        # Scanned/image page
         else:
 
             pix = page.get_pixmap(
@@ -547,7 +636,6 @@ def translate_pdf():
 
         }), 400
 
-    # Target language
     target_language = request.form.get(
         "target_language",
         "english"
@@ -661,16 +749,11 @@ def translate_pdf():
 def download_pdf(filename):
 
     filepath = os.path.join(
-
         OUTPUT_FOLDER,
-
         filename
-
     )
 
-    if not os.path.exists(
-        filepath
-    ):
+    if not os.path.exists(filepath):
 
         return "File not found", 404
 
@@ -699,11 +782,7 @@ if __name__ == "__main__":
     )
 
     app.run(
-
         host="0.0.0.0",
-
         port=port,
-
         debug=False
-
-            )
+    )
