@@ -13,7 +13,6 @@ const progressPercent = document.getElementById("progressPercent");
 const resultSection = document.getElementById("resultSection");
 const resultsBox = document.getElementById("results");
 
-
 let selectedFile = null;
 
 
@@ -24,9 +23,7 @@ let selectedFile = null;
 pdfInput.addEventListener("change", function () {
 
     if (this.files.length > 0) {
-
         handleFile(this.files[0]);
-
     }
 
 });
@@ -41,29 +38,23 @@ function handleFile(file) {
     if (file.type !== "application/pdf") {
 
         alert("Please select a PDF file.");
-
         return;
 
     }
-
 
     if (file.size > 50 * 1024 * 1024) {
 
         alert("Maximum file size is 50 MB.");
-
         return;
 
     }
 
-
     selectedFile = file;
-
 
     fileInfo.textContent =
         file.name +
         " • " +
         formatSize(file.size);
-
 
     translateBtn.disabled = false;
 
@@ -117,7 +108,6 @@ dropZone.addEventListener(
 
         dropZone.classList.remove("dragging");
 
-
         if (event.dataTransfer.files.length > 0) {
 
             handleFile(
@@ -141,17 +131,22 @@ translateBtn.addEventListener(
         if (!selectedFile) {
 
             alert("Please select a PDF first.");
-
             return;
 
         }
 
-
         const formData = new FormData();
 
+        // PDF file
         formData.append(
             "pdf",
             selectedFile
+        );
+
+        // Selected target language
+        formData.append(
+            "target_language",
+            targetLanguage.value
         );
 
 
@@ -208,7 +203,7 @@ translateBtn.addEventListener(
 
             setProgress(
                 85,
-                "Creating English PDF..."
+                "Creating translated PDF..."
             );
 
 
@@ -223,9 +218,7 @@ translateBtn.addEventListener(
             );
 
 
-            // ==========================
-            // DOWNLOAD BUTTON
-            // ==========================
+            // Download button
 
             addDownloadButton(
                 data.download
@@ -283,12 +276,42 @@ function setProgress(
 
 
 // ==============================
+// GET LANGUAGE NAME
+// ==============================
+
+function getLanguageName() {
+
+    const value =
+        targetLanguage.value;
+
+    if (value === "hindi") {
+
+        return "Hindi";
+
+    }
+
+    if (value === "roman_hindi") {
+
+        return "Roman Hindi";
+
+    }
+
+    return "English";
+
+}
+
+
+// ==============================
 // SHOW RESULTS
 // ==============================
 
 function displayResults(pages) {
 
     resultsBox.innerHTML = "";
+
+
+    const languageName =
+        getLanguageName();
 
 
     pages.forEach(function (page) {
@@ -336,7 +359,9 @@ function displayResults(pages) {
 
 
         translated.innerHTML =
-            "<strong>English Translation</strong><br>" +
+            "<strong>" +
+            languageName +
+            " Translation</strong><br>" +
             escapeHtml(
                 page.translated
             );
@@ -393,7 +418,9 @@ function addDownloadButton(url) {
 
 
     button.textContent =
-        "⬇ Download English PDF";
+        "⬇ Download " +
+        getLanguageName() +
+        " PDF";
 
 
     button.className =
@@ -433,4 +460,4 @@ function escapeHtml(text) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 
-}
+        }
