@@ -34,16 +34,11 @@ def hindi_to_roman(text):
 
     try:
 
-        # Devanagari -> ITRANS
         roman = sanscript.transliterate(
             text,
             sanscript.DEVANAGARI,
             sanscript.ITRANS
         )
-
-        # ------------------------------------------
-        # ITRANS cleanup
-        # ------------------------------------------
 
         replacements = [
             ("RR^i", "ri"),
@@ -52,11 +47,8 @@ def hindi_to_roman(text):
             ("R^I", "ri"),
             ("Ri", "ri"),
 
-            ("ai", "ai"),
-            ("au", "au"),
-
-            ("chh", "chh"),
             ("Chh", "chh"),
+            ("chh", "chh"),
 
             ("kh", "kh"),
             ("gh", "gh"),
@@ -92,17 +84,9 @@ def hindi_to_roman(text):
         for old, new in replacements:
             roman = roman.replace(old, new)
 
-        # ------------------------------------------
-        # Punctuation
-        # ------------------------------------------
-
         roman = roman.replace("||", ".")
         roman = roman.replace("|", ".")
         roman = roman.replace("~", "")
-
-        # ------------------------------------------
-        # Remove extra spaces
-        # ------------------------------------------
 
         roman = re.sub(
             r"\s+",
@@ -110,13 +94,8 @@ def hindi_to_roman(text):
             roman
         ).strip()
 
-        # ------------------------------------------
-        # Natural Roman Hindi word corrections
-        # ------------------------------------------
-
         corrections = {
 
-            # Common words
             "eka": "ek",
             "EkA": "Ek",
 
@@ -195,10 +174,6 @@ def hindi_to_roman(text):
             "rahatA": "rehta",
             "rahata": "rehta",
 
-            "vaha": "woh",
-
-            "apane": "apne",
-
             "kAryon": "kaamon",
             "karyon": "kaamon",
 
@@ -217,7 +192,7 @@ def hindi_to_roman(text):
             "ghaMTe": "ghante",
             "ghante": "ghante",
 
-            "bitAtA": "bitata",
+            "bitAtA": "bitaata",
             "bitata": "bitata",
 
             "baithakon": "meetings",
@@ -235,8 +210,6 @@ def hindi_to_roman(text):
 
             "karanA": "karna",
             "karana": "karna",
-
-            "dina": "din",
 
             "bhara": "bhar",
             "Bhara": "Bhar",
@@ -271,8 +244,6 @@ def hindi_to_roman(text):
 
             "AtA": "aata",
             "ata": "aata",
-
-            "apanI": "apni",
 
             "patnI": "patni",
             "patni": "patni",
@@ -338,12 +309,8 @@ def hindi_to_roman(text):
 
             "so": "so",
 
-            "jAtA": "jaata",
-
             "shurU": "shuru",
             "shuru": "shuru",
-
-            "karane": "karne",
 
             "agale": "agle",
             "Agale": "Agle",
@@ -352,7 +319,6 @@ def hindi_to_roman(text):
 
             "hone": "hone",
 
-            # Pronouns
             "mujhe": "mujhe",
             "Mujhe": "Mujhe",
 
@@ -366,7 +332,6 @@ def hindi_to_roman(text):
 
             "hama": "hamara",
 
-            # Common grammar
             "haii": "hai",
             "haia": "hai",
 
@@ -387,7 +352,6 @@ def hindi_to_roman(text):
             "mErI": "meri",
             "meri": "meri",
 
-            "usakA": "uska",
             "usakI": "uski",
 
             "kevala": "sirf",
@@ -400,23 +364,15 @@ def hindi_to_roman(text):
             "bada": "baad",
 
             "sA": "sa",
-
-            "santushta": "santusht",
         }
 
-        # ------------------------------------------
-        # Word-by-word correction
-        # ------------------------------------------
-
         words = roman.split()
-
         cleaned = []
 
         for word in words:
 
             punctuation = ""
 
-            # Keep punctuation
             while word and word[-1] in ".,!?;:":
 
                 punctuation = (
@@ -426,34 +382,20 @@ def hindi_to_roman(text):
 
                 word = word[:-1]
 
-            # Remove unwanted symbols
-            word = word.replace(
-                "^",
-                ""
-            )
+            word = word.replace("^", "")
+            word = word.replace("'", "")
 
-            word = word.replace(
-                "'",
-                ""
-            )
-
-            # Exact correction
             if word in corrections:
 
                 word = corrections[word]
 
-            # Case-insensitive correction
             elif word.lower() in corrections:
 
-                replacement = corrections[
-                    word.lower()
-                ]
+                replacement = corrections[word.lower()]
 
                 if word and word[0].isupper():
 
-                    replacement = (
-                        replacement.capitalize()
-                    )
+                    replacement = replacement.capitalize()
 
                 word = replacement
 
@@ -461,13 +403,7 @@ def hindi_to_roman(text):
                 word + punctuation
             )
 
-        roman = " ".join(
-            cleaned
-        )
-
-        # ------------------------------------------
-        # Phrase corrections
-        # ------------------------------------------
+        roman = " ".join(cleaned)
 
         phrase_corrections = [
 
@@ -485,33 +421,26 @@ def hindi_to_roman(text):
             ("office ke lie", "office ke liye"),
 
             ("kaI ghaMTe", "kai ghante"),
-
             ("kai ghante", "kai ghante"),
 
             ("bitata hai", "bitaata hai"),
 
             ("pUrA karane", "poora karne"),
-
             ("poora karane", "poora karne"),
 
             ("sAtha", "saath"),
-
             ("shAnta", "shaant"),
-
             ("shAntipUrNa", "shaantipoorn"),
 
             ("rAta ke", "raat ke"),
 
             ("ghara vApasa", "ghar wapas"),
-
             ("ghar vapasa", "ghar wapas"),
 
             ("agale dina", "agle din"),
-
             ("agale din", "agle din"),
 
             ("eka aura", "ek aur"),
-
             ("eka", "ek"),
 
             ("vyasta dina", "vyast din"),
@@ -519,29 +448,22 @@ def hindi_to_roman(text):
             ("hara subaha", "har subah"),
 
             ("jaldI uthatA", "jaldi uthta"),
-
             ("jaldI", "jaldi"),
 
             ("vaha", "woh"),
-
             ("Vaha", "Woh"),
 
             ("apane", "apne"),
-
             ("apanI", "apni"),
 
             ("karatA", "karta"),
-
             ("aura", "aur"),
 
             ("ghara", "ghar"),
-
             ("kAma", "kaam"),
-
             ("shAma", "shaam"),
 
             ("mahasUsa", "mehsoos"),
-
             ("jimmedAriyAn", "zimmedariyan"),
         ]
 
@@ -551,10 +473,6 @@ def hindi_to_roman(text):
                 old,
                 new
             )
-
-        # ------------------------------------------
-        # Final cleanup
-        # ------------------------------------------
 
         roman = re.sub(
             r"\s+",
@@ -610,7 +528,6 @@ def is_bad_translation(text):
 def split_text(text, max_length=2500):
 
     chunks = []
-
     current = ""
 
     for line in text.splitlines(True):
@@ -647,9 +564,7 @@ def google_translate_chunk(text, target):
                 target=target
             )
 
-            result = translator.translate(
-                text
-            )
+            result = translator.translate(text)
 
             if result and not is_bad_translation(result):
 
@@ -682,9 +597,7 @@ def mymemory_translate_chunk(text, target):
             target=target
         )
 
-        result = translator.translate(
-            text
-        )
+        result = translator.translate(text)
 
         if result and not is_bad_translation(result):
 
@@ -779,7 +692,6 @@ def translate_text(text, target_language):
         translated_parts
     )
 
-    # Hindi -> Natural Roman Hindi
     if target_language == "roman_hindi":
 
         result = hindi_to_roman(
@@ -841,7 +753,6 @@ def create_translated_pdf(
     for result in results:
 
         page_number = result["page"]
-
         translated_text = result["translated"]
 
         page = pdf.new_page()
@@ -867,10 +778,7 @@ def create_translated_pdf(
             lineheight=1.5
         )
 
-    pdf.save(
-        output_path
-    )
-
+    pdf.save(output_path)
     pdf.close()
 
 
@@ -883,10 +791,7 @@ def process_pdf(
     target_language
 ):
 
-    pdf = fitz.open(
-        filepath
-    )
-
+    pdf = fitz.open(filepath)
     results = []
 
     for page_number, page in enumerate(pdf):
@@ -896,11 +801,8 @@ def process_pdf(
             + str(page_number + 1)
         )
 
-        text = page.get_text(
-            "text"
-        )
+        text = page.get_text("text")
 
-        # Selectable text
         if text and text.strip():
 
             translated = translate_text(
@@ -924,7 +826,6 @@ def process_pdf(
 
             })
 
-        # Scanned PDF
         else:
 
             pix = page.get_pixmap(
@@ -934,14 +835,10 @@ def process_pdf(
                 )
             )
 
-            image_bytes = pix.tobytes(
-                "png"
-            )
+            image_bytes = pix.tobytes("png")
 
             image = Image.open(
-                io.BytesIO(
-                    image_bytes
-                )
+                io.BytesIO(image_bytes)
             )
 
             detected_text = extract_image_text(
@@ -1022,9 +919,7 @@ def translate_pdf():
 
         }), 400
 
-    if not file.filename.lower().endswith(
-        ".pdf"
-    ):
+    if not file.filename.lower().endswith(".pdf"):
 
         return jsonify({
 
@@ -1047,4 +942,124 @@ def translate_pdf():
         "roman_hindi"
     ]
 
-if target_language not in allowed_languages:
+    if target_language not in allowed_languages:
+        target_language = "english"
+
+    filepath = os.path.join(
+        UPLOAD_FOLDER,
+        file.filename
+    )
+
+    file.save(filepath)
+
+    try:
+
+        results = process_pdf(
+            filepath,
+            target_language
+        )
+
+        output_filename = (
+            os.path.splitext(
+                file.filename
+            )[0]
+            + "_"
+            + target_language
+            + ".pdf"
+        )
+
+        output_path = os.path.join(
+            OUTPUT_FOLDER,
+            output_filename
+        )
+
+        create_translated_pdf(
+            results,
+            output_path,
+            target_language
+        )
+
+        return jsonify({
+
+            "success":
+                True,
+
+            "pages":
+                results,
+
+            "download":
+                "/download/"
+                + output_filename
+
+        })
+
+    except Exception as error:
+
+        print(
+            "Processing error:",
+            error
+        )
+
+        return jsonify({
+
+            "success":
+                False,
+
+            "error":
+                str(error)
+
+        }), 500
+
+    finally:
+
+        if os.path.exists(filepath):
+
+            os.remove(filepath)
+
+
+# ==========================================
+# DOWNLOAD
+# ==========================================
+
+@app.route(
+    "/download/<filename>"
+)
+def download_file(filename):
+
+    filepath = os.path.join(
+        OUTPUT_FOLDER,
+        filename
+    )
+
+    if not os.path.exists(filepath):
+
+        return jsonify({
+
+            "success":
+                False,
+
+            "error":
+                "File not found."
+
+        }), 404
+
+    return send_file(
+        filepath,
+        as_attachment=True
+    )
+
+
+# ==========================================
+# RUN
+# ==========================================
+
+if __name__ == "__main__":
+
+    app.run(
+        host="0.0.0.0",
+        port=int(
+            os.environ.get(
+                "PORT",
+                5000
+            )
+  
