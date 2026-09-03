@@ -9,7 +9,6 @@ from PIL import Image
 import pytesseract
 
 from deep_translator import GoogleTranslator, MyMemoryTranslator
-from indic_transliteration import sanscript
 
 
 app = Flask(__name__)
@@ -32,464 +31,353 @@ def hindi_to_roman(text):
     if not text:
         return ""
 
-    try:
+    # This function converts Devanagari Hindi into
+    # simple readable Roman Hindi without ITRANS
+    # symbols such as A, I, U, ^ etc.
 
-        roman = sanscript.transliterate(
-            text,
-            sanscript.DEVANAGARI,
-            sanscript.ITRANS
+    devanagari_map = {
+        "अ": "a", "आ": "aa", "इ": "i", "ई": "ee",
+        "उ": "u", "ऊ": "oo", "ऋ": "ri",
+        "ए": "e", "ऐ": "ai", "ओ": "o", "औ": "au",
+
+        "क": "k", "ख": "kh", "ग": "g", "घ": "gh", "ङ": "ng",
+        "च": "ch", "छ": "chh", "ज": "j", "झ": "jh", "ञ": "ny",
+        "ट": "t", "ठ": "th", "ड": "d", "ढ": "dh", "ण": "n",
+        "त": "t", "थ": "th", "द": "d", "ध": "dh", "न": "n",
+        "प": "p", "फ": "ph", "ब": "b", "भ": "bh", "म": "m",
+        "य": "y", "र": "r", "ल": "l", "व": "v",
+        "श": "sh", "ष": "sh", "स": "s", "ह": "h",
+
+        "ड़": "d", "ढ़": "dh",
+        "ज़": "z", "फ़": "f", "क़": "q",
+        "ख़": "kh", "ग़": "gh",
+
+        "०": "0", "१": "1", "२": "2", "३": "3",
+        "४": "4", "५": "5", "६": "6", "७": "7",
+        "८": "8", "९": "9",
+
+        "।": ".",
+        "॥": ".",
+        "ँ": "n",
+        "ं": "n",
+        "ः": "h",
+    }
+
+    vowel_signs = {
+        "ा": "aa",
+        "ि": "i",
+        "ी": "ee",
+        "ु": "u",
+        "ू": "oo",
+        "ृ": "ri",
+        "े": "e",
+        "ै": "ai",
+        "ो": "o",
+        "ौ": "au",
+        "ॉ": "o",
+        "ॅ": "e",
+    }
+
+    output = []
+    i = 0
+
+    while i < len(text):
+
+        char = text[i]
+
+        # Virama / halant
+        if char == "्":
+            i += 1
+            continue
+
+        # Vowel signs
+        if char in vowel_signs:
+            output.append(vowel_signs[char])
+            i += 1
+            continue
+
+        # Nukta
+        if char == "़":
+            i += 1
+            continue
+
+        # Consonant
+        if char in devanagari_map:
+
+            roman = devanagari_map[char]
+
+            # Check next character
+            if i + 1 < len(text):
+
+                next_char = text[i + 1]
+
+                # If next character is a vowel sign
+                if next_char in vowel_signs:
+                    output.append(
+                        roman + vowel_signs[next_char]
+                    )
+                    i += 2
+                    continue
+
+                # If next character is halant,
+                # don't add inherent "a"
+                if next_char == "्":
+                    output.append(roman)
+                    i += 2
+                    continue
+
+            # Consonants normally carry "a"
+            consonants = {
+                "क", "ख", "ग", "घ", "ङ",
+                "च", "छ", "ज", "झ", "ञ",
+                "ट", "ठ", "ड", "ढ", "ण",
+                "त", "थ", "द", "ध", "न",
+                "प", "फ", "ब", "भ", "म",
+                "य", "र", "ल", "व",
+                "श", "ष", "स", "ह",
+                "ड़", "ढ़", "ज़", "फ़",
+                "क़", "ख़", "ग़"
+            }
+
+            if char in consonants:
+                output.append(roman + "a")
+            else:
+                output.append(roman)
+
+            i += 1
+            continue
+
+        # Keep Latin letters, numbers and punctuation
+        output.append(char)
+        i += 1
+
+    roman = "".join(output)
+
+    # ==========================================
+    # CLEAN COMMON ROMAN HINDI FORMS
+    # ==========================================
+
+    corrections = {
+        "vaha": "woh",
+        "vah": "woh",
+
+        "yeha": "yeh",
+        "yaha": "yahaan",
+
+        "kaha": "kahan",
+        "kahana": "kehna",
+
+        "eka": "ek",
+
+        "hara": "har",
+        "sabhi": "sab",
+
+        "dina": "din",
+        "samaya": "samay",
+
+        "ghara": "ghar",
+        "ghare": "ghar",
+        "gharo": "gharon",
+
+        "subaha": "subah",
+        "jaldii": "jaldi",
+
+        "uthtaa": "uthta",
+        "uthataa": "uthta",
+
+        "karataa": "karta",
+        "karata": "karta",
+
+        "jaataa": "jaata",
+        "jata": "jaata",
+
+        "aataa": "aata",
+        "aata": "aata",
+
+        "jaataa": "jaata",
+
+        "apanaa": "apna",
+        "apane": "apne",
+        "apani": "apni",
+
+        "usakaa": "uska",
+        "usake": "uske",
+        "usaki": "uski",
+
+        "unake": "unke",
+        "unaki": "unki",
+
+        "auraa": "aur",
+        "aura": "aur",
+
+        "karyaalaya": "office",
+        "kaarya": "kaam",
+
+        "kaama": "kaam",
+        "kaamon": "kaamon",
+
+        "shaama": "shaam",
+        "raata": "raat",
+
+        "khaanaa": "khaana",
+        "khaane": "khaane",
+
+        "puraa": "poora",
+        "poori": "poori",
+
+        "karane": "karne",
+        "karanaa": "karna",
+
+        "hone": "hone",
+        "hote": "hote",
+
+        "mein": "mein",
+        "men": "mein",
+
+        "nahina": "nahi",
+        "nahin": "nahi",
+
+        "kyona": "kyun",
+        "kyon": "kyun",
+
+        "maina": "main",
+        "mai": "main",
+
+        "meraa": "mera",
+        "meree": "meri",
+
+        "tumhe": "tumhein",
+        "tumahen": "tumhein",
+
+        "ham": "hum",
+
+        "baata": "baat",
+        "baare": "baare",
+
+        "aaraama": "aaraam",
+
+        "thakaana": "thakan",
+        "thakaa": "thaka",
+
+        "mehsoosa": "mehsoos",
+
+        "madada": "madad",
+        "karanaa": "karna",
+
+        "leinaa": "lena",
+        "lenaa": "lena",
+
+        "saathe": "saath",
+        "saatha": "saath",
+
+        "kuchha": "kuchh",
+
+        "shaanta": "shaant",
+
+        "shurua": "shuru",
+
+        "agale": "agle",
+    }
+
+    words = roman.split()
+    cleaned_words = []
+
+    for word in words:
+
+        if not word:
+            continue
+
+        # Separate punctuation
+        beginning = ""
+        ending = ""
+
+        while word and word[0] in "\"'([{":
+            beginning += word[0]
+            word = word[1:]
+
+        while word and word[-1] in ".,!?;:)]}\"'":
+            ending = word[-1] + ending
+            word = word[:-1]
+
+        lower_word = word.lower()
+
+        if lower_word in corrections:
+
+            replacement = corrections[lower_word]
+
+            # Preserve first-letter capitalization
+            if word and word[0].isupper():
+                replacement = replacement.capitalize()
+
+            word = replacement
+
+        cleaned_words.append(
+            beginning + word + ending
         )
 
-        replacements = [
-            ("RR^i", "ri"),
-            ("R^i", "ri"),
-            ("RRi", "ri"),
-            ("R^I", "ri"),
-            ("Ri", "ri"),
+    roman = " ".join(cleaned_words)
 
-            ("Chh", "chh"),
-            ("chh", "chh"),
+    # ==========================================
+    # PHRASE CORRECTIONS
+    # ==========================================
 
-            ("kh", "kh"),
-            ("gh", "gh"),
-            ("jh", "jh"),
-            ("th", "th"),
-            ("dh", "dh"),
-            ("ph", "ph"),
-            ("bh", "bh"),
+    phrase_corrections = [
+        ("ke lie", "ke liye"),
+        ("ke liye ghar", "ghar ke liye"),
 
-            ("Sh", "sh"),
-            ("sh", "sh"),
+        ("har subah", "har subah"),
+        ("jaldi uthta", "jaldi uthta"),
 
-            ("GY", "gy"),
-            ("JN", "gy"),
+        ("nashta karata", "nashta karta"),
+        ("nashta karta", "nashta karta"),
 
-            ("~N", "n"),
-            ("~n", "n"),
-            (".N", "n"),
-            (".n", "n"),
+        ("office ke lie", "office ke liye"),
 
-            ("~m", "m"),
+        ("ghar vapas", "ghar wapas"),
+        ("ghara vapas", "ghar wapas"),
 
-            ("T", "t"),
-            ("D", "d"),
-            ("N", "n"),
+        ("agle dina", "agle din"),
+        ("agle din", "agle din"),
 
-            ("M", "n"),
+        ("ek aura", "ek aur"),
+        ("ek aur", "ek aur"),
 
-            ("^", ""),
-            ("'", ""),
-        ]
+        ("vyasta dina", "vyast din"),
+        ("vyast dina", "vyast din"),
 
-        for old, new in replacements:
-            roman = roman.replace(old, new)
+        ("poora karane", "poora karne"),
 
-        roman = roman.replace("||", ".")
-        roman = roman.replace("|", ".")
-        roman = roman.replace("~", "")
+        ("raat ke", "raat ke"),
 
-        roman = re.sub(
-            r"\s+",
-            " ",
-            roman
-        ).strip()
+        ("ghar ke", "ghar ke"),
 
-        corrections = {
+        ("din ke lie", "din ke liye"),
 
-            "eka": "ek",
-            "EkA": "Ek",
+        ("din ke liye", "din ke liye"),
+    ]
 
-            "vyasta": "vyast",
-            "Vyasta": "Vyast",
+    for old, new in phrase_corrections:
+        roman = roman.replace(old, new)
 
-            "dina": "din",
-            "Dina": "Din",
+    # ==========================================
+    # GENERAL CLEANUP
+    # ==========================================
 
-            "hara": "har",
-            "Hara": "Har",
+    roman = re.sub(
+        r"\s+",
+        " ",
+        roman
+    ).strip()
 
-            "subaha": "subah",
-            "Subaha": "Subah",
+    # Remove accidental repeated vowels
+    roman = re.sub(
+        r"\baaa+\b",
+        "aa",
+        roman,
+        flags=re.IGNORECASE
+    )
 
-            "jaldI": "jaldi",
-            "jaldi": "jaldi",
-
-            "uthatA": "uthta",
-            "uthata": "uthta",
-            "UthatA": "Uthta",
-
-            "vaha": "woh",
-            "Vaha": "Woh",
-
-            "vah": "woh",
-            "Vah": "Woh",
-
-            "usakA": "uska",
-            "usak": "uska",
-
-            "apane": "apne",
-            "Apane": "Apne",
-
-            "apani": "apni",
-            "apanI": "apni",
-            "Apani": "Apni",
-
-            "lie": "liye",
-            "liye": "liye",
-
-            "tAIyAra": "taiyar",
-            "taiyAra": "taiyar",
-            "taiyara": "taiyar",
-            "TaiyAra": "Taiyar",
-
-            "nAshtA": "nashta",
-            "nashta": "nashta",
-            "Nashta": "Nashta",
-
-            "karatA": "karta",
-            "karata": "karta",
-            "KaratA": "Karta",
-
-            "aura": "aur",
-            "Aura": "Aur",
-
-            "chalA": "chala",
-            "chala": "chala",
-
-            "ghara": "ghar",
-            "Ghara": "Ghar",
-
-            "kAryAlaya": "office",
-            "karyalaya": "office",
-            "Karyalaya": "office",
-
-            "kArya": "kaam",
-            "karya": "kaam",
-
-            "vyasta": "vyast",
-
-            "kAryadivasa": "workday",
-            "karyadivasa": "workday",
-
-            "rahatA": "rehta",
-            "rahata": "rehta",
-
-            "kAryon": "kaamon",
-            "karyon": "kaamon",
-
-            "pUrA": "poora",
-            "pUra": "poora",
-            "pura": "poora",
-
-            "karane": "karne",
-
-            "men": "mein",
-            "meM": "mein",
-
-            "kaI": "kai",
-            "kai": "kai",
-
-            "ghaMTe": "ghante",
-            "ghante": "ghante",
-
-            "bitAtA": "bitaata",
-            "bitata": "bitata",
-
-            "baithakon": "meetings",
-
-            "bhAga": "bhaag",
-            "bhaga": "bhaag",
-
-            "lenA": "lena",
-            "lena": "lena",
-
-            "sahayogiyon": "colleagues",
-
-            "madada": "madad",
-            "Madada": "Madad",
-
-            "karanA": "karna",
-            "karana": "karna",
-
-            "bhara": "bhar",
-            "Bhara": "Bhar",
-
-            "kAma": "kaam",
-            "kama": "kaam",
-
-            "shAma": "shaam",
-            "shama": "shaam",
-
-            "taka": "tak",
-
-            "thakAna": "thakan",
-
-            "mahasUsa": "mehsoos",
-            "mahasusa": "mehsoos",
-
-            "jimmedAriyAn": "zimmedariyan",
-            "jimmedariyan": "zimmedariyan",
-
-            "pUrI": "poori",
-            "puri": "poori",
-
-            "vApasa": "wapas",
-            "vapasa": "wapas",
-
-            "yAtrA": "yatra",
-            "yatra": "yatra",
-
-            "jaba": "jab",
-            "Jaba": "Jab",
-
-            "AtA": "aata",
-            "ata": "aata",
-
-            "patnI": "patni",
-            "patni": "patni",
-
-            "sAtha": "saath",
-            "satha": "saath",
-
-            "kuCha": "kuchh",
-            "kucha": "kuchh",
-
-            "shAnta": "shaant",
-            "shanta": "shaant",
-
-            "samaya": "samay",
-
-            "bItAtA": "bitaata",
-            "bitata": "bitaata",
-
-            "unake": "unke",
-            "Unake": "Unke",
-
-            "bAre": "baare",
-            "bare": "baare",
-
-            "bAta": "baat",
-            "bata": "baat",
-
-            "ArAma": "aaraam",
-            "arama": "aaraam",
-
-            "rAta": "raat",
-            "Rata": "Raat",
-
-            "khAne": "khaane",
-            "khane": "khaane",
-
-            "shAntipUrNa": "shaantipoorn",
-            "shantipurna": "shaantipoorn",
-
-            "taiyArI": "taiyari",
-            "taiyari": "taiyari",
-
-            "ahasAsa": "ehsaas",
-            "ahasaasa": "ehsaas",
-
-            "thakA": "thaka",
-            "thaka": "thaka",
-
-            "huA": "hua",
-            "hua": "hua",
-
-            "lekina": "lekin",
-            "Lekin": "Lekin",
-
-            "santuShta": "santusht",
-            "santushta": "santusht",
-
-            "bistara": "bistar",
-            "Bistara": "Bistar",
-
-            "jAtA": "jaata",
-            "jata": "jaata",
-
-            "so": "so",
-
-            "shurU": "shuru",
-            "shuru": "shuru",
-
-            "agale": "agle",
-            "Agale": "Agle",
-
-            "taiyAra": "taiyar",
-
-            "hone": "hone",
-
-            "mujhe": "mujhe",
-            "Mujhe": "Mujhe",
-
-            "tumhe": "tumhein",
-            "Tumhe": "Tumhein",
-
-            "tumhE": "tumhein",
-
-            "ham": "hum",
-            "Ham": "Hum",
-
-            "hama": "hamara",
-
-            "haii": "hai",
-            "haia": "hai",
-
-            "nahin": "nahi",
-            "Nahin": "Nahi",
-
-            "kyon": "kyun",
-            "Kyon": "Kyun",
-
-            "mai": "main",
-            "Mai": "Main",
-
-            "mE": "main",
-
-            "mErA": "mera",
-            "mera": "mera",
-
-            "mErI": "meri",
-            "meri": "meri",
-
-            "usakI": "uski",
-
-            "kevala": "sirf",
-            "sirf": "sirf",
-
-            "isalie": "isliye",
-            "isliye": "isliye",
-
-            "bAda": "baad",
-            "bada": "baad",
-
-            "sA": "sa",
-        }
-
-        words = roman.split()
-        cleaned = []
-
-        for word in words:
-
-            punctuation = ""
-
-            while word and word[-1] in ".,!?;:":
-
-                punctuation = (
-                    word[-1]
-                    + punctuation
-                )
-
-                word = word[:-1]
-
-            word = word.replace("^", "")
-            word = word.replace("'", "")
-
-            if word in corrections:
-
-                word = corrections[word]
-
-            elif word.lower() in corrections:
-
-                replacement = corrections[word.lower()]
-
-                if word and word[0].isupper():
-
-                    replacement = replacement.capitalize()
-
-                word = replacement
-
-            cleaned.append(
-                word + punctuation
-            )
-
-        roman = " ".join(cleaned)
-
-        phrase_corrections = [
-
-            ("ke lie", "ke liye"),
-            ("ke liye ghar", "ghar se"),
-
-            ("ghara ke", "ghar ke"),
-
-            ("dina ke lie", "din ke liye"),
-
-            ("taiyara hota", "taiyar hota"),
-
-            ("nashta karata", "nashta karta"),
-
-            ("office ke lie", "office ke liye"),
-
-            ("kaI ghaMTe", "kai ghante"),
-            ("kai ghante", "kai ghante"),
-
-            ("bitata hai", "bitaata hai"),
-
-            ("pUrA karane", "poora karne"),
-            ("poora karane", "poora karne"),
-
-            ("sAtha", "saath"),
-            ("shAnta", "shaant"),
-            ("shAntipUrNa", "shaantipoorn"),
-
-            ("rAta ke", "raat ke"),
-
-            ("ghara vApasa", "ghar wapas"),
-            ("ghar vapasa", "ghar wapas"),
-
-            ("agale dina", "agle din"),
-            ("agale din", "agle din"),
-
-            ("eka aura", "ek aur"),
-            ("eka", "ek"),
-
-            ("vyasta dina", "vyast din"),
-
-            ("hara subaha", "har subah"),
-
-            ("jaldI uthatA", "jaldi uthta"),
-            ("jaldI", "jaldi"),
-
-            ("vaha", "woh"),
-            ("Vaha", "Woh"),
-
-            ("apane", "apne"),
-            ("apanI", "apni"),
-
-            ("karatA", "karta"),
-            ("aura", "aur"),
-
-            ("ghara", "ghar"),
-            ("kAma", "kaam"),
-            ("shAma", "shaam"),
-
-            ("mahasUsa", "mehsoos"),
-            ("jimmedAriyAn", "zimmedariyan"),
-        ]
-
-        for old, new in phrase_corrections:
-
-            roman = roman.replace(
-                old,
-                new
-            )
-
-        roman = re.sub(
-            r"\s+",
-            " ",
-            roman
-        ).strip()
-
-        return roman
-
-    except Exception as error:
-
-        print(
-            "Roman Hindi conversion error:",
-            error
-        )
-
-        return text
+    return roman
 
 
 # ==========================================
@@ -540,7 +428,6 @@ def split_text(text, max_length=2500):
             current = line
 
         else:
-
             current += line
 
     if current.strip():
@@ -567,7 +454,6 @@ def google_translate_chunk(text, target):
             result = translator.translate(text)
 
             if result and not is_bad_translation(result):
-
                 return result
 
         except Exception as error:
@@ -600,7 +486,6 @@ def mymemory_translate_chunk(text, target):
         result = translator.translate(text)
 
         if result and not is_bad_translation(result):
-
             return result
 
     except Exception as error:
@@ -1064,4 +949,3 @@ if __name__ == "__main__":
             )
         )
     )
-  
